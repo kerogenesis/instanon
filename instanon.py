@@ -137,7 +137,11 @@ class Content(Directories):
         """
 
         if "Sorry, this username isn't available." in self.root_page:
-            click.secho(f"[!] User '{self.username}' does not exist", fg='red')
+            instagram_page = f"https://www.instagram.com/{self.username}"
+            if requests.get(instagram_page).status_code == 404:
+                click.secho(f"[!] User '{self.username}' does not exist", fg='red')
+            else:
+                click.secho(f"[!] Server error. Please try again later", fg='red')
             return False
         elif "This Account is Private" in self.root_page:
             click.secho(f"[!] Account '{self.username}' is private", fg='yellow')
