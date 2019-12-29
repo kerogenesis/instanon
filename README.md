@@ -97,4 +97,4 @@ python3.8 instanon.py -u katie_westwood --stories
 - In the Triggers tab, click New... and set the script runtime.
 
 - In the Actions tab, enter your Python path, script options and script folder path. Example:
-<img src="https://res.cloudinary.com/wark/image/upload/v1576599661/actions.png" style="margin-top: 12px !important;">
+<img src="https://res.cloudinary.com/wark/image/upload/v1577606322/actions.png" style="margin-top: 12px !important;">
