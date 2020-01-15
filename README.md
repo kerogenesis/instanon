@@ -98,3 +98,9 @@ python3.8 instanon.py -u katie_westwood --stories
 
 - In the Actions tab, enter your Python path, script options and script folder path. Example:
 <img src="https://res.cloudinary.com/wark/image/upload/v1577606322/actions.png" style="margin-top: 12px !important;">
+
+#### You can also create a batch script on your desktop and run it if necessary.
+```
+@echo off
+cmd /c "E:\path\to\venv\Scripts\python.exe E:\path\to\instanon.py -u USER1 -u USER2 -s -o "E:\your\path""
+```
