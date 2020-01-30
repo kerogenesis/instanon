@@ -4,7 +4,7 @@ chardet==3.0.4
 Click==7.0
 colorama==0.4.3
 idna==2.8
-lxml==4.4.2
+lxml==4.5.0
 requests==2.22.0
 soupsieve==1.9.5
 urllib3==1.25.7
