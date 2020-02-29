@@ -202,5 +202,8 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Pycharm
+.idea/
+
 # Users dir
 users/

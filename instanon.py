@@ -85,7 +85,7 @@ class Directories:
         """Removes empty dirs from the story dir"""
 
         try:
-            if os.listdir(os.path.abspath(self.stories_path)) == []:
+            if not os.listdir(os.path.abspath(self.stories_path)):
                 shutil.rmtree(os.path.abspath(self.stories_path))
         except FileNotFoundError:
             pass
@@ -105,7 +105,6 @@ class Content(Directories):
         download_stories() -> Download user stories
         get_highlights() -> Get user highlights
         download_highlights() -> Download user highlights
-        get_all_filenames_in_dir() -> Get all file names in dir
         validate() -> Check the passed file name in user_path
     """
 
@@ -122,9 +121,8 @@ class Content(Directories):
         """
 
         self.username = username
-        self.api = 'https://storiesig.com'
-        self.stories_link = self.api + '/stories/' + self.username
-        self.user_link = self.api + '?username=' + self.username
+        self.api = 'https://insta-stories.com/en'
+        self.user_link = self.api + '/stories/' + self.username
         self.root_page = requests.get(self.user_link, verify=False).text
         super().__init__(username, output_flag=output_flag, chaos_flag=chaos_flag)
 
@@ -136,14 +134,14 @@ class Content(Directories):
             False: If not
         """
 
-        if "Sorry, this username isn't available." in self.root_page:
+        if "This username doesn't exist. Please try with another one." in self.root_page:
             instagram_page = f"https://www.instagram.com/{self.username}"
             if requests.get(instagram_page).status_code == 404:
                 click.secho(f"[!] User '{self.username}' does not exist", fg='red')
             else:
                 click.secho(f"[!] Server error. Please try again later", fg='red')
             return False
-        elif "This Account is Private" in self.root_page:
+        elif "This user has a private account. Please try with another one." in self.root_page:
             click.secho(f"[!] Account '{self.username}' is private", fg='yellow')
             return False
         else:
@@ -156,20 +154,13 @@ class Content(Directories):
             stories (list): Stories links
         """
 
-        r = requests.get(self.stories_link, verify=False).text
-        if 'No stories to show' in r:
+        if 'No stories available. Please try again later.' in self.root_page:
             click.secho(f"\n[!] Whoops! {self.username} did not post "
                         "any recent stories", fg='yellow')
             return False
         else:
             print(f"\n[*] Getting {self.username} stories")
-            stories = []
-            soup = BeautifulSoup(r, features="lxml")
-            links = soup.findAll('a', attrs={'href': re.compile("^https://scontent")})
-
-            for link in links:
-                url = link.get('href')
-                stories.append(unescape(url))
+            stories = self.parsing_content(self.root_page)
             return stories
 
     def download_stories(self, stories_pool):
@@ -189,10 +180,10 @@ class Content(Directories):
                 for link in bar:
                     r = requests.get(link, verify=False)
                     parser = urlparse(link)
-                    filename = os.path.basename(parser.path)
+                    filename = os.path.basename(parser.path.split('/')[-1])
 
-                    # Validate and dowload stories
-                    if self.validate(filename):
+                    # Validate and download stories
+                    if self.validate(filename, self.stories_path):
                         with open(os.path.join(self.stories_path, filename), 'wb') as f:
                             f.write(r.content)
                     else:
@@ -207,111 +198,122 @@ class Content(Directories):
             highlights_dictionary (dict): {link: dirname} of each highlights group
         """
 
-        hlarray = []    # Links to every highlights group
-        hlnarray = []   # Last parts of the links ↑
-        hnarray = []    # Highlights names
-        hdirname = []   # Highlights directory names
+        highlights_array = []  # Absolute links to every highlights group
+        highlights_id_array = []
+        highlights_names_array = []
+        highlights_dir_names = []
 
         # Parsing URLs
         soup = BeautifulSoup(self.root_page, features="lxml")
-        hlinks = soup.findAll('a', attrs={'href': re.compile("^/highlights/")})
-        if hlinks:
+        highlight_divs = soup.findAll('div', {'class': re.compile("^highlight ")})
+        if highlight_divs:
             print(f"\n[*] Getting {self.username} highlights")
 
-            # Get links to every highlights group and last parts of this links
-            for highlight in hlinks:
-                url = highlight.get('href')
+            # Get links to every highlights group
+            highlight_links = []
+            for div in highlight_divs:
+                dirty_link = div.find('a').get('href')
+                split_dirty_link = dirty_link.split('/')
+                clear_link = '/' + '/'.join(split_dirty_link[2:])
+                highlight_links.append(clear_link)
+
+            # Get highlights id and absolute urls
+            for url in highlight_links:
                 parser = urlparse(url)
-                hname = os.path.basename(parser.path)
-                hlnarray.append(hname)
-                hlarray.append(self.api + url)
+                highlight_id = os.path.basename(parser.path)
+                highlights_id_array.append(highlight_id)
+                highlights_array.append(self.api + url)
 
             # Get highlights names
-            hnames = soup.findAll("img", {"class": "jsx-2521016335"})
-            for i in hnames:
-                dname = i['alt']
-                hnarray.append(dname)
+            highlight_names = soup.findAll('div', {'class': 'highlight-description'})
+            for name in highlight_names:
+                highlights_names_array.append(name.text.strip())
 
             # Get highlights directory names
-            for i, j in zip(hnarray, hlnarray):
-                hdirname.append(i + '_' + j)
+            for i, j in zip(highlights_names_array, highlights_id_array):
+                highlights_dir_names.append(i + '_' + j)
 
             # Get {link: dirname} of each highlights group
-            highlights_dictionary = dict(zip(hlarray, hdirname))
+            highlights_dictionary = dict(zip(highlights_array, highlights_dir_names))
             return highlights_dictionary
         else:
             click.secho(f"\n[!] Whoops! {self.username} does not appear "
                         "to have any highlights", fg='yellow')
             return False
 
-    def download_highlight(self, key, value, start, end):
+    def download_highlights(self, group, name, start, end):
         """Downloads user stories.
 
         Args
-            key (str): Link to every highlights group
-            value (str): Highlights directory name
+            group (str): Link to every highlights group
+            name (str): Highlights directory name
             start (int): Start counter highlights groups
             end (int): End counter highlights groups
         """
 
         # Get highlights group page
-        html = requests.get(key, verify=False).text
+        html = requests.get(group, verify=False).text
 
         # Create a directory
-        od = os.path.join(self.highlights_path, value)
-        if not os.path.isdir(od):
-            os.makedirs(od)
+        highlight_dir = os.path.join(self.highlights_path, name)
+        if not os.path.isdir(highlight_dir):
+            os.makedirs(highlight_dir)
 
         # Parsing all highlights of the group
-        soup = BeautifulSoup(html, features="lxml")
-        links = soup.findAll('a', attrs={'href': re.compile("^https://scontent")})
+        highlights_links = self.parsing_content(html)
 
-        # Download every highlight
-        try:
+        try:  # Download every highlight
             bar_label = f'[*] Downloading highlight {start} of {end}'
             fill_char = click.style('=', fg='green')
-            with click.progressbar(links,
+            with click.progressbar(highlights_links,
                                    label=bar_label,
                                    fill_char=fill_char) as bar:
-                for link in bar:
-                    url = link.get('href')
+                for url in bar:
                     r = requests.get(url, verify=False)
                     parser = urlparse(url)
-                    filename = os.path.basename(parser.path)
-                    if self.validate(filename):
-                        with open(os.path.join(od, filename), 'wb') as f:
+                    filename = os.path.basename(parser.path.split('/')[-1])
+                    if self.validate(filename, self.highlights_path):
+                        with open(os.path.join(highlight_dir, filename), 'wb') as f:
                             f.write(r.content)
                     else:
                         continue
         except KeyboardInterrupt:
             exit()
 
-    def get_all_filenames_in_dir(self, dir_path):
-        """Gets all file names in the passed directory.
+    @staticmethod
+    def parsing_content(page):
+        content_links = []
+        soup = BeautifulSoup(page, features="lxml")
+        content_divs = soup.findAll('div', {'class': 'download-story-container'})
+        for div in content_divs:
+            download_link = div.find('a', {'class': 'download-story'})
+            onclick = str(download_link.get('onclick'))
+            url_pattern = r"(https://scontent\S+)(.*?)'"
+            element_url = re.search(url_pattern, onclick, re.MULTILINE)
+            try:
+                content_links.append(unescape(element_url.group(1)))
+            except AttributeError:
+                continue
+        return content_links
 
-        Arg
-            dir_path (str): User directory path
-        Return
-            all_filenames (list): List of file names
-        """
-
-        all_filenames = []
-        for root, directories, files in os.walk(dir_path):
-            for filename in files:
-                if not filename.startswith('.'):
-                    all_filenames.append(filename)
-        return all_filenames
-
-    def validate(self, user_file):
-        """Check the passed file name in user_path.
+    @staticmethod
+    def validate(user_file, user_path):
+        """Check the passed file name in directory.
 
         Arg
             user_file (str): file name
+            user_path (str): directory
         Return
             True or False
         """
 
-        user_data = self.get_all_filenames_in_dir(self.user_path)
+        # Gets all file names in the user_path
+        user_data = []
+        for root, directories, files in os.walk(user_path):
+            for filename in files:
+                if not filename.startswith('.'):
+                    user_data.append(filename)
+
         if user_file in user_data:
             return False
         else:
@@ -350,8 +352,8 @@ def main(users, stories, highlights, output, chaos):
                     dirs.create(highlights_flag=True)
                     # init highlights group counter
                     start, end = 1, len(highlights_pool)
-                    for key, value in highlights_pool.items():
-                        user_content.download_highlight(key, value, start, end)
+                    for group, name in highlights_pool.items():
+                        user_content.download_highlights(group, name, start, end)
                         start += 1
                 else:
                     pass
