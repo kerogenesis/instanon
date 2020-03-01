@@ -121,7 +121,7 @@ class Content(Directories):
         """
 
         self.username = username
-        self.api = 'https://insta-stories.com/en'
+        self.api = 'https://www.insta-stories.com/en'
         self.user_link = self.api + '/stories/' + self.username
         self.root_page = requests.get(self.user_link, verify=False).text
         super().__init__(username, output_flag=output_flag, chaos_flag=chaos_flag)
