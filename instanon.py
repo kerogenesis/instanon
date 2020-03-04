@@ -183,7 +183,8 @@ class Content(Directories):
                     filename = os.path.basename(parser.path.split('/')[-1])
 
                     # Validate and download stories
-                    if self.validate(filename, self.stories_path):
+                    root_stories_path = os.path.join(self.user_path, 'stories')
+                    if self.validate(filename, root_stories_path):
                         with open(os.path.join(self.stories_path, filename), 'wb') as f:
                             f.write(r.content)
                     else:
