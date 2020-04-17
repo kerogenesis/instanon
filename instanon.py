@@ -144,6 +144,10 @@ class Content(Directories):
         elif "This user has a private account. Please try with another one." in self.root_page:
             click.secho(f"[!] Account '{self.username}' is private", fg='yellow')
             return False
+        elif 'There has been an error. Please try again later.' in self.root_page:
+            click.secho(f"\n[!] It looks like the Instagram API is not responding. "
+                        "Please try again later", fg='yellow')
+            return False
         else:
             return True
 
