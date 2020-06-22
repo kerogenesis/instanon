@@ -158,6 +158,9 @@ class Content(Directories):
             click.secho(f"\n[!] Whoops! {self.username} did not post "
                         "any recent stories", fg='yellow')
             return False
+        elif 'There has been an error. Please try again later.' in self.root_page:
+            click.secho(f"\n[!] Server error. Please try again later", fg='yellow')
+            return False
         else:
             print(f"\n[*] Getting {self.username} stories")
             stories = self.parsing_content(self.root_page)
