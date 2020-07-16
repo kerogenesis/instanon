@@ -43,11 +43,7 @@ class Directories:
 
         # If custom output path is passed
         # set root_path with this directory
-        if output_flag:
-            self.root_path = r'{}'.format(output_flag)
-        else:
-            self.root_path = 'users'
-
+        self.root_path = r'{}'.format(output_flag) if output_flag else 'users'
         self.user_path = os.path.join(self.root_path, self.username)
         self.highlights_path = os.path.join(self.user_path, 'highlights')
 
@@ -163,8 +159,7 @@ class Content(Directories):
             return False
         else:
             print(f"\n[*] Getting {self.username} stories")
-            stories = self.parsing_content(self.root_page)
-            return stories
+            return self.parsing_content(self.root_page)
 
     def download_stories(self, stories_pool):
         """Downloads user stories.
@@ -318,10 +313,7 @@ class Content(Directories):
                 if not filename.startswith('.'):
                     user_data.append(filename)
 
-        if user_file in user_data:
-            return False
-        else:
-            return True
+        return user_file not in user_data
 
 
 @click.command()
@@ -347,9 +339,6 @@ def main(users, stories, highlights, output, chaos):
                     dirs.create(stories_flag=True)
                     user_content.download_stories(stories_pool)
                     dirs.rm_empty_stories_dirs()
-                else:
-                    pass
-
             if highlights:
                 highlights_pool = user_content.get_highlights()
                 if highlights_pool:
@@ -359,9 +348,6 @@ def main(users, stories, highlights, output, chaos):
                     for group, name in highlights_pool.items():
                         user_content.download_highlights(group, name, start, end)
                         start += 1
-                else:
-                    pass
-
     click.secho(f'\n[*] All tasks have been completed\n', fg='green')
 
 
