@@ -6,5 +6,5 @@ colorama==0.4.4
 idna==2.10
 lxml==4.6.2
 requests==2.25.0
-soupsieve==2.0.1
+soupsieve==2.1
 urllib3==1.26.2
