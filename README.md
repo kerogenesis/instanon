@@ -21,7 +21,7 @@
 
 ## Setup
 
-1. Install Python 3.8
+1. Install the latest version of Python
 2. Clone this repo
 ```
 git clone https://github.com/dt-wark/instanon.git
@@ -29,7 +29,7 @@ git clone https://github.com/dt-wark/instanon.git
 
 3. Create and activate virtual environment
 ```
-python3.8 -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 ```
 
@@ -53,17 +53,17 @@ Options:
 
 #### Download stories and save them to /mnt/e/instagram directory
 ```
-python3.8 instanon.py -u katie_westwood -u sharishanya --stories --chaos --output "/mnt/e/instagram"
+python3 instanon.py -u katie_westwood -u sharishanya --stories --chaos --output "/mnt/e/instagram"
 ```
 
 #### Download highlights and save them to /mnt/e/instagram directory
 ```
-python3.8 instanon.py -u katie_westwood --highlights --output "/mnt/e/instagram"
+python3 instanon.py -u katie_westwood --highlights --output "/mnt/e/instagram"
 ```
 
 #### Download stories and save them to instanon script directory with script_run_days directories 
 ```
-python3.8 instanon.py -u katie_westwood --stories
+python3 instanon.py -u katie_westwood --stories
 ```
 
 
